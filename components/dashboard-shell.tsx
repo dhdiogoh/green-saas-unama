@@ -10,7 +10,7 @@ interface DashboardShellProps {
 export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-gradient-to-r from-emerald-500 to-green-400">
+      <header className="sticky top-0 z-40 border-b bg-gradient-to-r from-emerald-600 to-green-500">
         <div className="container flex h-16 items-center justify-between py-4">
           <MainNav />
           <div className="flex items-center gap-4">
@@ -19,8 +19,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </div>
         </div>
       </header>
-      <main className="flex-1 bg-white dark:bg-gray-900">
-        <div className="container grid gap-6 py-8">{children}</div>
+      <main className="flex-1 bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+        <div className="container grid gap-6 py-8 relative">{children}</div>
       </main>
     </div>
   )

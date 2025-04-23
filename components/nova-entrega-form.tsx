@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { AIAnalysisResult } from "@/components/ai-analysis-result"
+import { PontuacaoTable } from "@/components/pontuacao-table"
 
 export function NovaEntregaForm() {
   const router = useRouter()
@@ -46,7 +47,7 @@ export function NovaEntregaForm() {
     // Simulando envio
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/dashboard/historico")
+      router.push("/dashboard")
     }, 1500)
   }
 
@@ -119,7 +120,6 @@ export function NovaEntregaForm() {
                   <SelectContent>
                     <SelectItem value="aluminio">Alumínio</SelectItem>
                     <SelectItem value="vidro">Vidro</SelectItem>
-                    <SelectItem value="pano">Pano</SelectItem>
                     <SelectItem value="pet">PET</SelectItem>
                     <SelectItem value="papel">Papel</SelectItem>
                   </SelectContent>
@@ -133,6 +133,21 @@ export function NovaEntregaForm() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="curso">Curso</Label>
+                <Select required>
+                  <SelectTrigger id="curso">
+                    <SelectValue placeholder="Selecione o curso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ciencia-computacao">Ciência da Computação</SelectItem>
+                    <SelectItem value="odontologia">Odontologia</SelectItem>
+                    <SelectItem value="direito">Direito</SelectItem>
+                    <SelectItem value="engenharia">Engenharia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="turma">Turma</Label>
                 <Select required>
                   <SelectTrigger id="turma">
@@ -142,52 +157,7 @@ export function NovaEntregaForm() {
                     <SelectItem value="turma-a">Turma A</SelectItem>
                     <SelectItem value="turma-b">Turma B</SelectItem>
                     <SelectItem value="turma-c">Turma C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="curso">Curso</Label>
-                <Select required>
-                  <SelectTrigger id="curso">
-                    <SelectValue placeholder="Selecione o curso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ads">Análise e Desenvolvimento de Sistemas</SelectItem>
-                    <SelectItem value="si">Sistemas de Informação</SelectItem>
-                    <SelectItem value="cc">Ciência da Computação</SelectItem>
-                    <SelectItem value="eng">Engenharia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="semestre">Semestre</Label>
-                <Select required>
-                  <SelectTrigger id="semestre">
-                    <SelectValue placeholder="Selecione o semestre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1º Semestre</SelectItem>
-                    <SelectItem value="2">2º Semestre</SelectItem>
-                    <SelectItem value="3">3º Semestre</SelectItem>
-                    <SelectItem value="4">4º Semestre</SelectItem>
-                    <SelectItem value="5">5º Semestre</SelectItem>
-                    <SelectItem value="6">6º Semestre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="turno">Turno</Label>
-                <Select required>
-                  <SelectTrigger id="turno">
-                    <SelectValue placeholder="Selecione o turno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="matutino">Matutino</SelectItem>
-                    <SelectItem value="vespertino">Vespertino</SelectItem>
-                    <SelectItem value="noturno">Noturno</SelectItem>
+                    <SelectItem value="turma-d">Turma D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -199,11 +169,9 @@ export function NovaEntregaForm() {
                     <SelectValue placeholder="Selecione a unidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="centro">Centro</SelectItem>
-                    <SelectItem value="zona-sul">Zona Sul</SelectItem>
-                    <SelectItem value="zona-norte">Zona Norte</SelectItem>
-                    <SelectItem value="zona-leste">Zona Leste</SelectItem>
-                    <SelectItem value="zona-oeste">Zona Oeste</SelectItem>
+                    <SelectItem value="alcindo-cacela">Unama Alcindo Cacela</SelectItem>
+                    <SelectItem value="br">Unama BR</SelectItem>
+                    <SelectItem value="gentil">Unama Gentil</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -239,6 +207,8 @@ export function NovaEntregaForm() {
           </CardContent>
         </Card>
       )}
+
+      <PontuacaoTable />
 
       <div className="flex justify-end">
         <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={isLoading}>

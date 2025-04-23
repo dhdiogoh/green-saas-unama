@@ -2,38 +2,103 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Leaf, Recycle } from "lucide-react"
+import { Leaf, Recycle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { supabase } from "@/lib/supabase"
 
 export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Estados para os campos do formulário
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [fullName, setFullName] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
+  // Verificar se o usuário já está logado
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data.session) {
+        router.push("/dashboard")
+      }
+    }
+
+    checkSession()
+  }, [router])
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
-    // Simulando login
-    setTimeout(() => {
-      setIsLoading(false)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      // Login bem-sucedido
       router.push("/dashboard")
-    }, 1000)
+    } catch (error: any) {
+      setError(error.message || "Falha ao fazer login. Verifique suas credenciais.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    // Validação básica
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem")
+      return
+    }
+
     setIsLoading(true)
-    // Simulando cadastro
-    setTimeout(() => {
-      setIsLoading(false)
+
+    try {
+      // Registrar o usuário no Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      })
+
+      if (error) throw error
+
+      // Verificar se é necessário confirmar o email
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setError("Este email já está registrado.")
+        setIsLoading(false)
+        return
+      }
+
+      // Registro bem-sucedido
       router.push("/dashboard")
-    }, 1000)
+    } catch (error: any) {
+      setError(error.message || "Falha ao registrar. Tente novamente.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -53,9 +118,22 @@ export function LoginForm() {
         <TabsContent value="login">
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4 pt-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" placeholder="seu@email.com" required />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -64,7 +142,13 @@ export function LoginForm() {
                     Esqueceu a senha?
                   </Link>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
             </CardContent>
             <CardFooter>
@@ -82,21 +166,52 @@ export function LoginForm() {
         <TabsContent value="register">
           <form onSubmit={handleRegister}>
             <CardContent className="space-y-4 pt-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="fullname">Nome completo</Label>
-                <Input id="fullname" placeholder="Seu nome completo" required />
+                <Input
+                  id="fullname"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-email">E-mail</Label>
-                <Input id="register-email" type="email" placeholder="seu@email.com" required />
+                <Input
+                  id="register-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-password">Senha</Label>
-                <Input id="register-password" type="password" required />
+                <Input
+                  id="register-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar senha</Label>
-                <Input id="confirm-password" type="password" required />
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
               </div>
             </CardContent>
             <CardFooter>
