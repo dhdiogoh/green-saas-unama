@@ -7,27 +7,33 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  // Verificando se o usuário está autenticado
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  try {
+    // Verificando se o usuário está autenticado
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  // Rotas protegidas que requerem autenticação
-  const protectedRoutes = ["/dashboard"]
+    // Rotas protegidas que requerem autenticação
+    const protectedRoutes = ["/dashboard"]
 
-  // Verificar se a rota atual é protegida
-  const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+    // Verificar se a rota atual é protegida
+    const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
-  // Se for uma rota protegida e o usuário não estiver autenticado, redirecionar para login
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL("/", req.url)
-    return NextResponse.redirect(redirectUrl)
-  }
+    // Se for uma rota protegida e o usuário não estiver autenticado, redirecionar para login
+    if (isProtectedRoute && !session) {
+      console.log("Middleware: Usuário não autenticado tentando acessar rota protegida")
+      const redirectUrl = new URL("/", req.url)
+      return NextResponse.redirect(redirectUrl)
+    }
 
-  // Se o usuário estiver autenticado e tentar acessar a página de login, redirecionar para o dashboard
-  if (session && req.nextUrl.pathname === "/") {
-    const redirectUrl = new URL("/dashboard", req.url)
-    return NextResponse.redirect(redirectUrl)
+    // Se o usuário estiver autenticado e tentar acessar a página de login, redirecionar para o dashboard
+    if (session && req.nextUrl.pathname === "/") {
+      console.log("Middleware: Usuário autenticado tentando acessar página de login")
+      const redirectUrl = new URL("/dashboard", req.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+  } catch (error) {
+    console.error("Erro no middleware:", error)
   }
 
   return res

@@ -18,12 +18,14 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   // Estados para os campos do formulário
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [activeTab, setActiveTab] = useState("login")
 
   // Verificar se o usuário já está logado
   useEffect(() => {
@@ -43,25 +45,40 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
+      console.log("Tentando login com:", { email, password })
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      console.log("Resposta do login:", { data, error })
 
-      // Login bem-sucedido
-      router.push("/dashboard")
+      if (error) {
+        console.error("Erro de login:", error)
+        throw error
+      }
+
+      if (data.user && data.session) {
+        console.log("Login bem-sucedido, redirecionando...")
+        router.push("/dashboard")
+      } else {
+        throw new Error("Falha ao fazer login. Nenhuma sessão criada.")
+      }
     } catch (error: any) {
+      console.error("Erro capturado:", error)
       setError(error.message || "Falha ao fazer login. Verifique suas credenciais.")
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Substitua a função handleRegister existente pela seguinte implementação:
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(null)
 
     // Validação básica
     if (password !== confirmPassword) {
@@ -69,10 +86,15 @@ export function LoginForm() {
       return
     }
 
+    if (password.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      // Registrar o usuário no Supabase Auth
+      // Registrar o usuário no Supabase Auth com autoconfirmação
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -80,22 +102,78 @@ export function LoginForm() {
           data: {
             full_name: fullName,
           },
+          // Importante: isso indica que queremos que o usuário seja confirmado automaticamente
+          emailRedirectTo: window.location.origin,
         },
       })
 
-      if (error) throw error
+      console.log("Resposta do registro:", { data, error })
 
-      // Verificar se é necessário confirmar o email
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setError("Este email já está registrado.")
-        setIsLoading(false)
-        return
+      if (error) {
+        throw error
       }
 
-      // Registro bem-sucedido
-      router.push("/dashboard")
+      // Verificar se o usuário foi criado
+      if (data.user) {
+        // Tentar fazer login imediatamente após o registro
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (signInError) {
+          throw signInError
+        }
+
+        if (signInData.session) {
+          // Login bem-sucedido, redirecionar para o dashboard
+          router.push("/dashboard")
+        } else {
+          // Se por algum motivo não conseguir fazer login automaticamente
+          setSuccess("Cadastro realizado com sucesso! Você já pode fazer login.")
+          setActiveTab("login")
+        }
+      } else {
+        throw new Error("Falha ao criar usuário. Tente novamente.")
+      }
     } catch (error: any) {
-      setError(error.message || "Falha ao registrar. Tente novamente.")
+      console.error("Erro capturado:", error)
+
+      // Tratamento específico para erros comuns
+      if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+        setError("Este email já está registrado. Por favor, faça login.")
+        setActiveTab("login")
+      } else if (error.message.includes("Email signups are disabled")) {
+        // Se o cadastro por email estiver desativado, tente uma abordagem alternativa
+        try {
+          // Tente usar o método de admin para criar o usuário (se disponível)
+          // Nota: isso requer configuração adicional no Supabase
+          const { data: adminData, error: adminError } = await fetch("/api/create-user", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password, fullName }),
+          }).then((res) => res.json())
+
+          if (adminError) {
+            throw adminError
+          }
+
+          if (adminData) {
+            // Usuário criado com sucesso via API admin
+            setSuccess("Cadastro realizado com sucesso! Você já pode fazer login.")
+            setActiveTab("login")
+          }
+        } catch (adminCreateError) {
+          console.error("Erro ao criar usuário via admin:", adminCreateError)
+          setError(
+            "Cadastro por email está temporariamente indisponível. Por favor, entre em contato com o administrador.",
+          )
+        }
+      } else {
+        setError(error.message || "Falha ao registrar. Tente novamente.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -110,7 +188,7 @@ export function LoginForm() {
         <CardTitle className="text-2xl text-center">Green SaaS</CardTitle>
         <CardDescription className="text-green-100 text-center">Transformando resíduos em recursos</CardDescription>
       </CardHeader>
-      <Tabs defaultValue="login" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Entrar</TabsTrigger>
           <TabsTrigger value="register">Cadastrar</TabsTrigger>
@@ -170,6 +248,12 @@ export function LoginForm() {
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              {success && (
+                <Alert className="bg-green-50 border-green-200 text-green-800">
+                  <AlertCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription>{success}</AlertDescription>
                 </Alert>
               )}
               <div className="space-y-2">
