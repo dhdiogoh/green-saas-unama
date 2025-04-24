@@ -59,7 +59,9 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "@supabase/supabase-js": "latest",
-    "@supabase/auth-helpers-nextjs": "latest"
+    "leaflet": "latest",
+    "@supabase/auth-helpers-nextjs": "latest",
+    "react-leaflet": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

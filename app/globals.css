@@ -57,3 +57,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos para corrigir o problema do mapa */
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+header {
+  z-index: 50 !important;
+  position: relative;
+}
+
+/* Corrigir os ícones do Leaflet */
+.leaflet-default-icon-path {
+  background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
+}
+
+.leaflet-control-container {
+  z-index: 0 !important;
+}

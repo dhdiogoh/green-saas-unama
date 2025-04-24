@@ -26,11 +26,38 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Se o usuário estiver autenticado e tentar acessar a página de login, redirecionar para o dashboard
+    // Se o usuário estiver autenticado e tentar acessar a página de login, redirecionar para o dashboard apropriado
     if (session && req.nextUrl.pathname === "/") {
       console.log("Middleware: Usuário autenticado tentando acessar página de login")
-      const redirectUrl = new URL("/dashboard", req.url)
+
+      // Verificar o tipo de usuário
+      const userType = session.user.user_metadata?.user_type
+
+      // Redirecionar com base no tipo de usuário
+      const redirectUrl = new URL(userType === "aluno" ? "/dashboard/aluno" : "/dashboard", req.url)
+
       return NextResponse.redirect(redirectUrl)
+    }
+
+    // Verificar permissões para rotas específicas
+    if (session) {
+      const userType = session.user.user_metadata?.user_type
+
+      // Alunos não podem acessar rotas de admin
+      if (
+        userType === "aluno" &&
+        req.nextUrl.pathname.startsWith("/dashboard") &&
+        !req.nextUrl.pathname.startsWith("/dashboard/aluno")
+      ) {
+        const redirectUrl = new URL("/dashboard/aluno", req.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // Admins não podem acessar rotas de alunos
+      if (userType !== "aluno" && req.nextUrl.pathname.startsWith("/dashboard/aluno")) {
+        const redirectUrl = new URL("/dashboard", req.url)
+        return NextResponse.redirect(redirectUrl)
+      }
     }
   } catch (error) {
     console.error("Erro no middleware:", error)

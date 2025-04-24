@@ -2,26 +2,77 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Recycle, BarChart3, HelpCircle } from "lucide-react"
-
+import { Recycle, BarChart3, HelpCircle, Trophy, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 export function MainNav() {
   const pathname = usePathname()
+  const [userType, setUserType] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const getUserType = async () => {
+      try {
+        setIsLoading(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error("Erro ao obter sessão:", error)
+          setUserType("instituicao") // Valor padrão em caso de erro
+          return
+        }
+
+        if (data.session) {
+          const metadata = data.session.user.user_metadata || {}
+          setUserType(metadata.user_type || "instituicao")
+        } else {
+          setUserType("instituicao") // Valor padrão se não houver sessão
+        }
+      } catch (err) {
+        console.error("Erro ao carregar tipo de usuário:", err)
+        setUserType("instituicao") // Valor padrão em caso de erro
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    getUserType()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-6 md:gap-10 items-center">
+        <Link href="/dashboard" className="flex items-center space-x-2">
+          <Recycle className="h-6 w-6 text-white" />
+          <span className="hidden font-bold text-white sm:inline-block">Green SaaS</span>
+        </Link>
+      </div>
+    )
+  }
+
+  const isAluno = userType === "aluno"
+  const dashboardPath = isAluno ? "/dashboard/aluno" : "/dashboard"
+  const rankingPath = isAluno ? "/dashboard/aluno/ranking" : "/dashboard/turmas"
+  const ajudaPath = isAluno ? "/dashboard/aluno/ajuda" : "/dashboard/ajuda"
+  const pontosColetaPath = "/dashboard/aluno/pontos-coleta"
 
   return (
     <div className="flex gap-6 md:gap-10 items-center">
-      <Link href="/dashboard" className="flex items-center space-x-2">
+      <Link href={dashboardPath} className="flex items-center space-x-2">
         <Recycle className="h-6 w-6 text-white" />
         <span className="hidden font-bold text-white sm:inline-block">Green SaaS</span>
-        <span className="hidden text-xs bg-white/20 px-2 py-0.5 rounded text-white ml-1 sm:inline-block">Admin</span>
+        <span className="hidden text-xs bg-white/20 px-2 py-0.5 rounded text-white ml-1 sm:inline-block">
+          {isAluno ? "Aluno" : "Admin"}
+        </span>
       </Link>
       <nav className="flex gap-6">
         <Link
-          href="/dashboard"
+          href={dashboardPath}
           className={cn(
             "text-sm font-medium transition-colors hover:text-white/80",
-            pathname === "/dashboard" ? "text-white" : "text-white/60",
+            pathname === dashboardPath || pathname === "/dashboard" ? "text-white" : "text-white/60",
           )}
         >
           <span className="flex items-center">
@@ -29,23 +80,55 @@ export function MainNav() {
             Dashboard
           </span>
         </Link>
+
+        {!isAluno && (
+          <Link
+            href="/dashboard/nova-entrega"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-white/80",
+              pathname === "/dashboard/nova-entrega" ? "text-white" : "text-white/60",
+            )}
+          >
+            <span className="flex items-center">
+              <Recycle className="mr-1 h-4 w-4" />
+              Nova Entrega
+            </span>
+          </Link>
+        )}
+
         <Link
-          href="/dashboard/nova-entrega"
+          href={rankingPath}
           className={cn(
             "text-sm font-medium transition-colors hover:text-white/80",
-            pathname === "/dashboard/nova-entrega" ? "text-white" : "text-white/60",
+            pathname === rankingPath || pathname === "/dashboard/turmas" ? "text-white" : "text-white/60",
           )}
         >
           <span className="flex items-center">
-            <Recycle className="mr-1 h-4 w-4" />
-            Nova Entrega
+            <Trophy className="mr-1 h-4 w-4" />
+            Ranking
           </span>
         </Link>
+
+        {isAluno && (
+          <Link
+            href={pontosColetaPath}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-white/80",
+              pathname === pontosColetaPath ? "text-white" : "text-white/60",
+            )}
+          >
+            <span className="flex items-center">
+              <MapPin className="mr-1 h-4 w-4" />
+              Pontos de Coleta
+            </span>
+          </Link>
+        )}
+
         <Link
-          href="/dashboard/ajuda"
+          href={ajudaPath}
           className={cn(
             "text-sm font-medium transition-colors hover:text-white/80",
-            pathname === "/dashboard/ajuda" ? "text-white" : "text-white/60",
+            pathname === "/dashboard/ajuda" || pathname === "/dashboard/aluno/ajuda" ? "text-white" : "text-white/60",
           )}
         >
           <span className="flex items-center">

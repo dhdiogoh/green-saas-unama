@@ -19,25 +19,43 @@ export function UserNav() {
   const router = useRouter()
   const [userName, setUserName] = useState("Usuário")
   const [userEmail, setUserEmail] = useState("")
+  const [userType, setUserType] = useState<string | null>(null)
+  const [instituicao, setInstituicao] = useState<string | null>(null)
+  const [turma, setTurma] = useState<string | null>(null)
+  const [curso, setCurso] = useState<string | null>(null)
 
   useEffect(() => {
     // Buscar informações do usuário atual
     const getUserInfo = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const { data, error } = await supabase.auth.getUser()
 
-      if (user) {
-        // Obter o nome do usuário dos metadados
-        const fullName = user.user_metadata?.full_name
-        if (fullName) {
-          setUserName(fullName)
+        if (error) {
+          console.error("Erro ao obter usuário:", error)
+          return
         }
 
-        // Definir o email
-        if (user.email) {
-          setUserEmail(user.email)
+        if (data.user) {
+          // Obter o nome do usuário dos metadados
+          const metadata = data.user.user_metadata || {}
+          const fullName = metadata.full_name
+          if (fullName) {
+            setUserName(fullName)
+          }
+
+          // Definir o email
+          if (data.user.email) {
+            setUserEmail(data.user.email)
+          }
+
+          // Definir o tipo de usuário e outras informações
+          setUserType(metadata.user_type || "instituicao")
+          setInstituicao(metadata.instituicao || null)
+          setTurma(metadata.turma || null)
+          setCurso(metadata.curso || null)
         }
+      } catch (err) {
+        console.error("Erro ao carregar informações do usuário:", err)
       }
     }
 
@@ -45,8 +63,12 @@ export function UserNav() {
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
+    try {
+      await supabase.auth.signOut()
+      router.push("/")
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error)
+    }
   }
 
   // Obter as iniciais do nome para o avatar
@@ -74,13 +96,26 @@ export function UserNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{userName}</p>
             <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+            <p className="text-xs font-medium text-emerald-600 mt-1">
+              {userType === "aluno" ? "Aluno" : "Instituição"}
+            </p>
+            {userType === "aluno" && instituicao && (
+              <div className="mt-1 text-xs text-gray-500">
+                <p>{instituicao}</p>
+                {curso && turma && (
+                  <p>
+                    {curso} | {turma}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>Perfil</DropdownMenuItem>
           <DropdownMenuItem>Configurações</DropdownMenuItem>
-          <DropdownMenuItem>Gerenciar Usuários</DropdownMenuItem>
+          {userType !== "aluno" && <DropdownMenuItem>Gerenciar Usuários</DropdownMenuItem>}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
