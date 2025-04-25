@@ -6,40 +6,18 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
   try {
-    // Verificar se há um usuário demo no localStorage via cookie
-    const hasDemoUserCookie = req.cookies.has("demo-user")
-
     // Verificar se estamos em uma rota protegida
     const protectedRoutes = ["/dashboard"]
     const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+
+    // Verificar se há um usuário demo no localStorage via cookie
+    const hasDemoUserCookie = req.cookies.has("demo-user")
 
     // Se for uma rota protegida e não houver usuário demo, redirecionar para login
     if (isProtectedRoute && !hasDemoUserCookie) {
       console.log("Middleware: Usuário não autenticado tentando acessar rota protegida")
       const redirectUrl = new URL("/", req.url)
       return NextResponse.redirect(redirectUrl)
-    }
-
-    // Verificar se o usuário está tentando acessar o dashboard de aluno, mas não é aluno
-    if (req.nextUrl.pathname.startsWith("/dashboard/aluno") && hasDemoUserCookie) {
-      // Tentar obter o tipo de usuário do cookie
-      const cookieValue = req.cookies.get("user-type")?.value
-      if (cookieValue && cookieValue !== "aluno") {
-        console.log("Middleware: Usuário não-aluno tentando acessar dashboard de aluno")
-        const redirectUrl = new URL("/dashboard", req.url)
-        return NextResponse.redirect(redirectUrl)
-      }
-    }
-
-    // Verificar se o usuário está tentando acessar o dashboard principal, mas é aluno
-    if (req.nextUrl.pathname === "/dashboard" && hasDemoUserCookie) {
-      // Tentar obter o tipo de usuário do cookie
-      const cookieValue = req.cookies.get("user-type")?.value
-      if (cookieValue && cookieValue === "aluno") {
-        console.log("Middleware: Aluno tentando acessar dashboard principal")
-        const redirectUrl = new URL("/dashboard/aluno", req.url)
-        return NextResponse.redirect(redirectUrl)
-      }
     }
 
     return res
@@ -52,5 +30,5 @@ export async function middleware(req: NextRequest) {
 
 // Configurar quais rotas o middleware deve ser executado
 export const config = {
-  matcher: ["/", "/dashboard/:path*"],
+  matcher: ["/dashboard/:path*"],
 }

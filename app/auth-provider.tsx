@@ -30,13 +30,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         // Definir um cookie para o middleware - garantir que seja definido em todos os ambientes
         document.cookie = "demo-user=true; path=/; max-age=86400; SameSite=Lax"
-
-        // Definir o tipo de usuário no cookie para o middleware
-        const metadata = demoUser.user_metadata || {}
-        const userType = metadata.tipo_usuario || metadata.user_type
-        if (userType) {
-          document.cookie = `user-type=${userType}; path=/; max-age=86400; SameSite=Lax`
-        }
       }
     } catch (err) {
       console.error("Erro ao verificar usuário demo:", err)

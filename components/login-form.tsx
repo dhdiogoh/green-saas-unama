@@ -48,17 +48,13 @@ export function LoginForm() {
           user_metadata: metadata,
         }
 
-        console.log("Demo user aluno criado:", demoUser)
+        // Salvar no localStorage
         localStorage.setItem("demo-user", JSON.stringify(demoUser))
 
         // Definir cookie para o middleware
         document.cookie = "demo-user=true; path=/; max-age=86400"
-        document.cookie = "user-type=aluno; path=/; max-age=86400"
 
-        // Redirecionar para o dashboard do aluno - método mais robusto
-        console.log("Redirecionando para dashboard do aluno")
-
-        // Usar redirecionamento direto e forçado
+        // Redirecionar para o dashboard do aluno
         window.location.href = "/dashboard/aluno"
         return
       } else if (
@@ -80,17 +76,13 @@ export function LoginForm() {
           user_metadata: metadata,
         }
 
-        console.log("Demo user admin criado:", demoUser)
+        // Salvar no localStorage
         localStorage.setItem("demo-user", JSON.stringify(demoUser))
 
         // Definir cookie para o middleware
         document.cookie = "demo-user=true; path=/; max-age=86400"
-        document.cookie = "user-type=instituicao; path=/; max-age=86400"
 
-        // Redirecionar para o dashboard admin - método mais robusto
-        console.log("Redirecionando para dashboard admin")
-
-        // Usar redirecionamento direto e forçado
+        // Redirecionar para o dashboard admin
         window.location.href = "/dashboard"
         return
       } else {
