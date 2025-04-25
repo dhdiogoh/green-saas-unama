@@ -51,11 +51,14 @@ export function LoginForm() {
         console.log("Demo user aluno criado:", demoUser)
         localStorage.setItem("demo-user", JSON.stringify(demoUser))
 
-        // Redirecionar para o dashboard do aluno
+        // Definir cookie para o middleware
+        document.cookie = "demo-user=true; path=/; max-age=86400"
+
+        // Redirecionar para o dashboard do aluno - método mais robusto
         console.log("Redirecionando para dashboard do aluno")
-        setTimeout(() => {
-          window.location.href = "/dashboard/aluno"
-        }, 500)
+
+        // Usar redirecionamento direto e forçado
+        window.location.href = "/dashboard/aluno"
         return
       } else if (
         email === "adminalcindo@gmail.com" &&
@@ -79,11 +82,14 @@ export function LoginForm() {
         console.log("Demo user admin criado:", demoUser)
         localStorage.setItem("demo-user", JSON.stringify(demoUser))
 
-        // Redirecionar para o dashboard admin
+        // Definir cookie para o middleware
+        document.cookie = "demo-user=true; path=/; max-age=86400"
+
+        // Redirecionar para o dashboard admin - método mais robusto
         console.log("Redirecionando para dashboard admin")
-        setTimeout(() => {
-          window.location.href = "/dashboard"
-        }, 500)
+
+        // Usar redirecionamento direto e forçado
+        window.location.href = "/dashboard"
         return
       } else {
         throw new Error("Credenciais inválidas. Use as credenciais de demonstração.")

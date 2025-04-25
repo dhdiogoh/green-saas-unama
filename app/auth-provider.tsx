@@ -28,8 +28,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const demoUser = JSON.parse(demoUserStr)
         setUser(demoUser)
 
-        // Definir um cookie para o middleware
-        document.cookie = "demo-user=true; path=/; max-age=86400"
+        // Definir um cookie para o middleware - garantir que seja definido em todos os ambientes
+        document.cookie = "demo-user=true; path=/; max-age=86400; SameSite=Lax"
       }
     } catch (err) {
       console.error("Erro ao verificar usuário demo:", err)
