@@ -20,6 +20,28 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
+    // Verificar se o usuário está tentando acessar o dashboard de aluno, mas não é aluno
+    if (req.nextUrl.pathname.startsWith("/dashboard/aluno") && hasDemoUserCookie) {
+      // Tentar obter o tipo de usuário do cookie
+      const cookieValue = req.cookies.get("user-type")?.value
+      if (cookieValue && cookieValue !== "aluno") {
+        console.log("Middleware: Usuário não-aluno tentando acessar dashboard de aluno")
+        const redirectUrl = new URL("/dashboard", req.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
+    // Verificar se o usuário está tentando acessar o dashboard principal, mas é aluno
+    if (req.nextUrl.pathname === "/dashboard" && hasDemoUserCookie) {
+      // Tentar obter o tipo de usuário do cookie
+      const cookieValue = req.cookies.get("user-type")?.value
+      if (cookieValue && cookieValue === "aluno") {
+        console.log("Middleware: Aluno tentando acessar dashboard principal")
+        const redirectUrl = new URL("/dashboard/aluno", req.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
     return res
   } catch (error) {
     console.error("Erro geral no middleware:", error)

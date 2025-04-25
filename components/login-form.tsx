@@ -53,6 +53,7 @@ export function LoginForm() {
 
         // Definir cookie para o middleware
         document.cookie = "demo-user=true; path=/; max-age=86400"
+        document.cookie = "user-type=aluno; path=/; max-age=86400"
 
         // Redirecionar para o dashboard do aluno - método mais robusto
         console.log("Redirecionando para dashboard do aluno")
@@ -84,6 +85,7 @@ export function LoginForm() {
 
         // Definir cookie para o middleware
         document.cookie = "demo-user=true; path=/; max-age=86400"
+        document.cookie = "user-type=instituicao; path=/; max-age=86400"
 
         // Redirecionar para o dashboard admin - método mais robusto
         console.log("Redirecionando para dashboard admin")
