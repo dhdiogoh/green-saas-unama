@@ -2,6 +2,7 @@ import type React from "react"
 import { MainNav } from "@/components/main-nav"
 import { UserNav } from "@/components/user-nav"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { ChatButton } from "@/components/chat-button" // Import the ChatButton component
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -22,6 +23,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <main className="flex-1 bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 relative z-0">
         <div className="container grid gap-6 py-8 relative">{children}</div>
       </main>
+
+      {/* Add the ChatButton component here so it appears on all dashboard pages */}
+      <ChatButton />
     </div>
   )
 }

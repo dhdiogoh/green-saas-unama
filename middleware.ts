@@ -5,9 +5,10 @@ import type { NextRequest } from "next/server"
 export async function middleware(req: NextRequest) {
   // Criando um cliente Supabase específico para o middleware
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
 
   try {
+    const supabase = createMiddlewareClient({ req, res })
+
     // Verificando se o usuário está autenticado
     const {
       data: { session },
@@ -22,6 +23,15 @@ export async function middleware(req: NextRequest) {
     // Se for uma rota protegida e o usuário não estiver autenticado, redirecionar para login
     if (isProtectedRoute && !session) {
       console.log("Middleware: Usuário não autenticado tentando acessar rota protegida")
+
+      // Verificar se estamos em modo de demonstração (verificando um cookie ou header)
+      const hasDemoUser = req.cookies.has("demo-user") || req.headers.get("x-demo-mode") === "true"
+
+      if (hasDemoUser) {
+        // Em modo de demonstração, permitir acesso
+        return res
+      }
+
       const redirectUrl = new URL("/", req.url)
       return NextResponse.redirect(redirectUrl)
     }
@@ -31,7 +41,7 @@ export async function middleware(req: NextRequest) {
       console.log("Middleware: Usuário autenticado tentando acessar página de login")
 
       // Verificar o tipo de usuário
-      const userType = session.user.user_metadata?.user_type
+      const userType = session.user.user_metadata?.tipo_usuario || session.user.user_metadata?.user_type
 
       // Redirecionar com base no tipo de usuário
       const redirectUrl = new URL(userType === "aluno" ? "/dashboard/aluno" : "/dashboard", req.url)
@@ -41,13 +51,13 @@ export async function middleware(req: NextRequest) {
 
     // Verificar permissões para rotas específicas
     if (session) {
-      const userType = session.user.user_metadata?.user_type
+      const userType = session.user.user_metadata?.tipo_usuario || session.user.user_metadata?.user_type
 
       // Alunos não podem acessar rotas de admin
       if (
         userType === "aluno" &&
-        req.nextUrl.pathname.startsWith("/dashboard") &&
-        !req.nextUrl.pathname.startsWith("/dashboard/aluno")
+        ((req.nextUrl.pathname.startsWith("/dashboard") && !req.nextUrl.pathname.startsWith("/dashboard/aluno")) ||
+          req.nextUrl.pathname === "/dashboard/nova-entrega")
       ) {
         const redirectUrl = new URL("/dashboard/aluno", req.url)
         return NextResponse.redirect(redirectUrl)
@@ -61,6 +71,9 @@ export async function middleware(req: NextRequest) {
     }
   } catch (error) {
     console.error("Erro no middleware:", error)
+
+    // Em caso de erro, permitir o acesso (modo de fallback)
+    return res
   }
 
   return res

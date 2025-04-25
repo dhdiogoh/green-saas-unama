@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Recycle, BarChart3, HelpCircle, Trophy, MapPin } from "lucide-react"
+import { Recycle, BarChart3, HelpCircle, Trophy, MapPin, Code } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -16,6 +16,22 @@ export function MainNav() {
     const getUserType = async () => {
       try {
         setIsLoading(true)
+
+        // Tentar obter do localStorage primeiro (para modo de demonstração)
+        const demoUserStr = localStorage.getItem("demo-user")
+        if (demoUserStr) {
+          try {
+            const demoUser = JSON.parse(demoUserStr)
+            const metadata = demoUser.user_metadata || {}
+            setUserType(metadata.user_type || metadata.tipo_usuario || "instituicao")
+            setIsLoading(false)
+            return
+          } catch (err) {
+            console.error("Erro ao processar usuário demo:", err)
+          }
+        }
+
+        // Se não encontrou no localStorage, tentar do Supabase
         const { data, error } = await supabase.auth.getSession()
 
         if (error) {
@@ -26,7 +42,7 @@ export function MainNav() {
 
         if (data.session) {
           const metadata = data.session.user.user_metadata || {}
-          setUserType(metadata.user_type || "instituicao")
+          setUserType(metadata.user_type || metadata.tipo_usuario || "instituicao")
         } else {
           setUserType("instituicao") // Valor padrão se não houver sessão
         }
@@ -81,6 +97,7 @@ export function MainNav() {
           </span>
         </Link>
 
+        {/* Only show Nova Entrega for admin users */}
         {!isAluno && (
           <Link
             href="/dashboard/nova-entrega"
@@ -136,6 +153,20 @@ export function MainNav() {
             Ajuda
           </span>
         </Link>
+        {!isAluno && (
+          <Link
+            href="/dashboard/api-docs"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-white/80",
+              pathname === "/dashboard/api-docs" ? "text-white" : "text-white/60",
+            )}
+          >
+            <span className="flex items-center">
+              <Code className="mr-1 h-4 w-4" />
+              API Docs
+            </span>
+          </Link>
+        )}
       </nav>
     </div>
   )

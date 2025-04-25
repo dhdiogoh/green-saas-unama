@@ -7,7 +7,7 @@ export default function NovaEntregaPage() {
     <DashboardShell>
       <DashboardHeader
         heading="Nova Entrega de Material"
-        text="Registre sua contribuição para um mundo mais sustentável."
+        text="Registre a contribuição de materiais recicláveis entregues pelos alunos."
       />
       <div className="grid gap-8">
         <NovaEntregaForm />

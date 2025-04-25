@@ -30,8 +30,8 @@ export default function DashboardPage() {
         </div>
       </DashboardHeader>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <DashboardCards turma={selectedTurma} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <DashboardCards turma={selectedTurma} hidePontuacao={false} />
       </div>
 
       <div className="mt-6">

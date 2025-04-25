@@ -15,103 +15,16 @@ import {
   LineChart,
   Line,
   Legend,
+  BarChart,
+  Bar,
 } from "recharts"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-
-// Dados mockados para os gráficos
-const materialData = [
-  { name: "PET", valor: 45, meta: 100, cor: "#3b82f6" },
-  { name: "Alumínio", valor: 30, meta: 100, cor: "#6b7280" },
-  { name: "Vidro", valor: 15, meta: 100, cor: "#f59e0b" },
-  { name: "Papel", valor: 25, meta: 100, cor: "#10b981" },
-]
-
-// Dados para os gráficos de rosca individuais
-const petData = [
-  { name: "Coletado", valor: 45, cor: "#3b82f6" },
-  { name: "Meta", valor: 55, cor: "#e5e7eb" },
-]
-
-const aluminioData = [
-  { name: "Coletado", valor: 30, cor: "#6b7280" },
-  { name: "Meta", valor: 70, cor: "#e5e7eb" },
-]
-
-const vidroData = [
-  { name: "Coletado", valor: 15, cor: "#f59e0b" },
-  { name: "Meta", valor: 85, cor: "#e5e7eb" },
-]
-
-const papelData = [
-  { name: "Coletado", valor: 25, cor: "#10b981" },
-  { name: "Meta", valor: 75, cor: "#e5e7eb" },
-]
-
-// Dados para o gráfico de pizza com todos os materiais
-const allMaterialsData = [
-  { name: "PET", valor: 45, cor: "#3b82f6" },
-  { name: "Alumínio", valor: 30, cor: "#6b7280" },
-  { name: "Vidro", valor: 15, cor: "#f59e0b" },
-  { name: "Papel", valor: 25, cor: "#10b981" },
-]
-
-// Dados para o ranking por curso
-const rankingPorCurso = {
-  "Ciência da Computação": [
-    { name: "Turma A", valor: 850, posicao: 1 },
-    { name: "Turma B", valor: 650, posicao: 2 },
-    { name: "Turma C", valor: 450, posicao: 3 },
-    { name: "Turma D", valor: 350, posicao: 4 },
-  ],
-  Odontologia: [
-    { name: "Turma A", valor: 780, posicao: 1 },
-    { name: "Turma B", valor: 720, posicao: 2 },
-    { name: "Turma C", valor: 520, posicao: 3 },
-    { name: "Turma D", valor: 320, posicao: 4 },
-  ],
-  Direito: [
-    { name: "Turma A", valor: 920, posicao: 1 },
-    { name: "Turma B", valor: 680, posicao: 2 },
-    { name: "Turma C", valor: 580, posicao: 3 },
-    { name: "Turma D", valor: 480, posicao: 4 },
-  ],
-  Engenharia: [
-    { name: "Turma A", valor: 800, posicao: 1 },
-    { name: "Turma B", valor: 750, posicao: 2 },
-    { name: "Turma C", valor: 600, posicao: 3 },
-    { name: "Turma D", valor: 400, posicao: 4 },
-  ],
-}
-
-// Ranking geral (top 3 de todos os cursos)
-const rankingGeral = [
-  { curso: "Direito", turma: "Turma A", valor: 920, posicao: 1 },
-  { curso: "Ciência da Computação", turma: "Turma A", valor: 850, posicao: 2 },
-  { curso: "Engenharia", turma: "Turma A", valor: 800, posicao: 3 },
-]
-
-const progressoData = [
-  { name: "Jan", valor: 10 },
-  { name: "Fev", valor: 25 },
-  { name: "Mar", valor: 40 },
-  { name: "Abr", valor: 65 },
-  { name: "Mai", valor: 80 },
-  { name: "Jun", valor: 95 },
-]
-
-// Tipos de materiais para o carrossel
-const tiposMateriais = ["PET", "Alumínio", "Vidro", "Papel"]
-
-// Mapeamento de dados para cada material
-const materialDataMap = {
-  PET: petData,
-  Alumínio: aluminioData,
-  Vidro: vidroData,
-  Papel: papelData,
-}
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 // Mapeamento de cores para cada material
 const materialColors = {
@@ -119,6 +32,7 @@ const materialColors = {
   Alumínio: "#6b7280",
   Vidro: "#f59e0b",
   Papel: "#10b981",
+  Outros: "#8b5cf6",
 }
 
 // Função para obter medalha com base na posição
@@ -135,18 +49,150 @@ const getMedalByPosition = (position: number) => {
   }
 }
 
-export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
+export function DashboardCharts({
+  turma = "todas",
+  curso = "",
+  unidade = "",
+}: {
+  turma?: string
+  curso?: string
+  unidade?: string
+}) {
   const [mounted, setMounted] = useState(false)
   const [currentMaterialIndex, setCurrentMaterialIndex] = useState(0)
   const [chartType, setChartType] = useState("donut")
   const [selectedCurso, setSelectedCurso] = useState("geral")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [materialsData, setMaterialsData] = useState<any[]>([])
+  const [rankingData, setRankingData] = useState<any[]>([])
+  const [progressData, setProgressData] = useState<any[]>([])
+  const [totalKg, setTotalKg] = useState(0)
 
-  const currentMaterial = tiposMateriais[currentMaterialIndex]
-  const currentData = materialDataMap[currentMaterial as keyof typeof materialDataMap]
-  const currentColor = materialColors[currentMaterial as keyof typeof materialColors]
+  // Buscar dados de estatísticas e ranking
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Construir URL com parâmetros
+        let url = "/api/estatisticas"
+        const params = new URLSearchParams()
+
+        if (turma !== "todas") {
+          params.append("turma", turma)
+        }
+
+        if (curso) {
+          params.append("curso", curso)
+        }
+
+        if (unidade) {
+          params.append("unidade", unidade)
+        }
+
+        if (params.toString()) {
+          url += `?${params.toString()}`
+        }
+
+        // Buscar estatísticas
+        const statsResponse = await fetch(url)
+
+        if (!statsResponse.ok) {
+          throw new Error("Falha ao carregar estatísticas")
+        }
+
+        const statsResult = await statsResponse.json()
+        console.log("Dados de estatísticas:", statsResult)
+
+        // Armazenar o total de kg para cálculos de percentual
+        setTotalKg(statsResult.totalKg || 0)
+
+        // Formatar dados para os gráficos
+        const materialsStats = statsResult.estatisticasMateriais.map((item: any) => ({
+          name: item.tipo_residuo,
+          valor: Number(item.total_kg),
+          pontos: Number(item.total_pontos),
+          percentual: item.percentual || 0,
+          cor: materialColors[item.tipo_residuo as keyof typeof materialColors] || materialColors["Outros"],
+        }))
+
+        setMaterialsData(materialsStats)
+
+        // Buscar ranking
+        const rankingResponse = await fetch("/api/ranking")
+
+        if (!rankingResponse.ok) {
+          throw new Error("Falha ao carregar ranking")
+        }
+
+        const rankingResult = await rankingResponse.json()
+        setRankingData(rankingResult.data || [])
+
+        // Simular dados de progresso (em uma aplicação real, isso viria de uma API)
+        // Aqui estamos criando dados fictícios baseados nos últimos 6 meses
+        const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"]
+        const progressStats = months.map((month, index) => ({
+          name: month,
+          valor: Math.round(((index + 1) * statsResult.totalKg) / 6),
+        }))
+
+        setProgressData(progressStats)
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err)
+        setError(err instanceof Error ? err.message : "Erro desconhecido")
+
+        // Em caso de erro, se for a turma B, fornecer dados fictícios para demonstração
+        if (turma === "turma-b") {
+          const demoMaterialsData = [
+            { name: "PET", valor: 20.5, pontos: 1025, percentual: 45.1, cor: materialColors["PET"] },
+            { name: "Alumínio", valor: 15.0, pontos: 1200, percentual: 33.0, cor: materialColors["Alumínio"] },
+            { name: "Vidro", valor: 8.0, pontos: 240, percentual: 17.6, cor: materialColors["Vidro"] },
+            { name: "Papel", valor: 2.0, pontos: 40, percentual: 4.4, cor: materialColors["Papel"] },
+          ]
+
+          setMaterialsData(demoMaterialsData)
+          setTotalKg(45.5)
+
+          // Dados fictícios de progresso
+          const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"]
+          const demoProgressData = months.map((month, index) => ({
+            name: month,
+            valor: 5 + index * 8,
+          }))
+
+          setProgressData(demoProgressData)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (mounted) {
+      fetchData()
+    }
+  }, [turma, curso, unidade, mounted])
+
+  // Obter dados do material atual
+  const tiposMateriais = materialsData.map((item) => item.name)
+  const currentMaterial = tiposMateriais[currentMaterialIndex] || "PET"
+  const currentMaterialData = materialsData.find((item) => item.name === currentMaterial)
+
+  // Preparar dados para o gráfico de rosca
+  const donutData = currentMaterialData
+    ? [
+        { name: currentMaterial, valor: currentMaterialData.valor, cor: currentMaterialData.cor },
+        {
+          name: "Outros",
+          valor: totalKg - currentMaterialData.valor > 0 ? totalKg - currentMaterialData.valor : 0,
+          cor: "#e5e7eb",
+        },
+      ]
+    : []
 
   // Calcular a porcentagem para o material atual
-  const percentage = Math.round((currentData[0].valor / (currentData[0].valor + currentData[1].valor)) * 100)
+  const percentage = currentMaterialData ? Math.round(currentMaterialData.percentual) : 0
 
   const nextMaterial = () => {
     setCurrentMaterialIndex((prev) => (prev === tiposMateriais.length - 1 ? 0 : prev + 1))
@@ -157,14 +203,14 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
   }
 
   // Obter dados de ranking com base na seleção
-  const getRankingData = () => {
+  const getFilteredRankingData = () => {
     if (selectedCurso === "geral") {
-      return rankingGeral
+      return rankingData.slice(0, 3)
     }
-    return rankingPorCurso[selectedCurso as keyof typeof rankingPorCurso] || []
+    return rankingData.filter((item) => item.curso === selectedCurso).slice(0, 4)
   }
 
-  const rankingData = getRankingData()
+  const filteredRankingData = getFilteredRankingData()
 
   // Evitar erros de hidratação
   useEffect(() => {
@@ -184,11 +230,42 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
     )
   }
 
+  if (isLoading) {
+    return (
+      <Card className="border-emerald-500 bg-white dark:bg-white/5 dark:backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-gray-700 dark:text-white">Carregando gráficos...</CardTitle>
+        </CardHeader>
+        <CardContent className="h-80">
+          <Skeleton className="h-full w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="border-emerald-500 bg-white dark:bg-white/5 dark:backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-gray-700 dark:text-white">Erro ao carregar gráficos</CardTitle>
+        </CardHeader>
+        <CardContent className="h-80">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const turmaNome = turma === "todas" ? "Todas as Turmas" : turma.replace("turma-", "Turma ").toUpperCase()
+
   return (
     <Card className="border-emerald-500 bg-white dark:bg-white/5 dark:backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-gray-700 dark:text-white">
-          Dashboard Analítico {turma !== "todas" && `- ${turma.replace("turma-", "Turma ").toUpperCase()}`}
+          Dashboard Analítico {turma !== "todas" && `- ${turmaNome}`}
         </CardTitle>
         <CardDescription className="text-gray-500 dark:text-gray-300">
           Visualização detalhada do desempenho de reciclagem
@@ -211,21 +288,28 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                   <SelectContent>
                     <SelectItem value="donut">Gráfico Individual</SelectItem>
                     <SelectItem value="pie">Todos os Materiais</SelectItem>
+                    <SelectItem value="bar">Gráfico de Barras</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {chartType === "donut" ? (
                 <div className="flex-1 flex flex-col">
-                  <div className="text-center mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Button variant="outline" size="sm" onClick={prevMaterial} disabled={tiposMateriais.length <= 1}>
+                      <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+                    </Button>
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">{currentMaterial}</h3>
+                    <Button variant="outline" size="sm" onClick={nextMaterial} disabled={tiposMateriais.length <= 1}>
+                      Próximo <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
                   </div>
 
                   <div className="h-64 w-64 mx-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={currentData}
+                          data={donutData}
                           cx="50%"
                           cy="50%"
                           innerRadius={60}
@@ -235,7 +319,7 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                           startAngle={90}
                           endAngle={-270}
                         >
-                          {currentData.map((entry, index) => (
+                          {donutData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.cor} />
                           ))}
                         </Pie>
@@ -246,7 +330,7 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                           dominantBaseline="middle"
                           className="text-xl font-bold fill-gray-700 dark:fill-white"
                         >
-                          {currentData[0].valor}kg
+                          {currentMaterialData?.valor.toFixed(1) || 0}kg
                         </text>
                         <text
                           x="50%"
@@ -261,10 +345,7 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="flex justify-between items-center mt-4">
-                    <Button variant="outline" size="sm" onClick={prevMaterial}>
-                      <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-                    </Button>
+                  <div className="flex justify-center mt-4">
                     <div className="flex space-x-1">
                       {tiposMateriais.map((_, index) => (
                         <div
@@ -275,17 +356,14 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                         />
                       ))}
                     </div>
-                    <Button variant="outline" size="sm" onClick={nextMaterial}>
-                      Próximo <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
                   </div>
                 </div>
-              ) : (
+              ) : chartType === "pie" ? (
                 <div className="h-64 w-full mx-auto">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={allMaterialsData}
+                        data={materialsData}
                         cx="50%"
                         cy="50%"
                         outerRadius={80}
@@ -293,17 +371,55 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                         dataKey="valor"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {allMaterialsData.map((entry, index) => (
+                        {materialsData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.cor} />
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) => [`${value} kg`, "Quantidade"]}
+                        formatter={(value, name, props) => {
+                          const item = props.payload
+                          return [`${Number(value).toFixed(1)} kg (${item.percentual.toFixed(1)}%)`, name]
+                        }}
                         contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", color: "#333" }}
                         className="dark:bg-[#333] dark:border-[#555] dark:text-white"
                       />
                       <Legend />
                     </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-64 w-full mx-auto">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={materialsData}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" className="dark:stroke-[#444]" />
+                      <XAxis dataKey="name" stroke="#888" className="dark:stroke-[#aaa]" />
+                      <YAxis stroke="#888" className="dark:stroke-[#aaa]" />
+                      <Tooltip
+                        formatter={(value, name, props) => {
+                          if (name === "valor") {
+                            const item = props.payload
+                            return [`${Number(value).toFixed(1)} kg (${item.percentual.toFixed(1)}%)`, "Quantidade"]
+                          }
+                          return [value, name]
+                        }}
+                        contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", color: "#333" }}
+                        className="dark:bg-[#333] dark:border-[#555] dark:text-white"
+                      />
+                      <Legend />
+                      <Bar dataKey="valor" name="Quantidade (kg)" radius={[4, 4, 0, 0]}>
+                        {materialsData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.cor} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               )}
@@ -318,68 +434,83 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="geral">Ranking Geral</SelectItem>
-                    <SelectItem value="Ciência da Computação">Ciência da Computação</SelectItem>
-                    <SelectItem value="Odontologia">Odontologia</SelectItem>
-                    <SelectItem value="Direito">Direito</SelectItem>
-                    <SelectItem value="Engenharia">Engenharia</SelectItem>
+                    {rankingData
+                      .map((item) => item.curso)
+                      .filter((value, index, self) => self.indexOf(value) === index)
+                      .map((curso) => (
+                        <SelectItem key={curso} value={curso}>
+                          {curso}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex-1 overflow-auto">
                 <div className="space-y-3">
-                  {rankingData.map((item, index) => {
-                    const medal = getMedalByPosition(item.posicao)
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between p-4 rounded-lg border ${
-                          item.posicao === 1
-                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                            : item.posicao === 2
-                              ? "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-                              : item.posicao === 3
-                                ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200/50 dark:border-amber-800/50"
-                                : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <div
-                            className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 font-bold ${
-                              item.posicao === 1
-                                ? "bg-amber-400 text-black"
-                                : item.posicao === 2
-                                  ? "bg-gray-300 text-black"
-                                  : item.posicao === 3
-                                    ? "bg-amber-700 text-white"
-                                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                            }`}
-                          >
-                            {item.posicao}
+                  {filteredRankingData.length > 0 ? (
+                    filteredRankingData.map((item, index) => {
+                      const medal = getMedalByPosition(index + 1)
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-4 rounded-lg border ${
+                            index === 0
+                              ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                              : index === 1
+                                ? "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
+                                : index === 2
+                                  ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200/50 dark:border-amber-800/50"
+                                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 font-bold ${
+                                index === 0
+                                  ? "bg-amber-400 text-black"
+                                  : index === 1
+                                    ? "bg-gray-300 text-black"
+                                    : index === 2
+                                      ? "bg-amber-700 text-white"
+                                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              }`}
+                            >
+                              {index + 1}
+                            </div>
+                            <div>
+                              {selectedCurso === "geral" ? (
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{item.curso}</span>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400">{item.turma}</span>
+                                </div>
+                              ) : (
+                                <span className="font-medium">{item.turma}</span>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            {selectedCurso === "geral" ? (
-                              <div className="flex flex-col">
-                                <span className="font-medium">{item.curso}</span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">{item.turma}</span>
+                          <div className="flex items-center">
+                            <div className="text-right mr-3">
+                              <div className="font-semibold">{item.total_pontos} pontos</div>
+                              <div className="text-xs text-gray-500">
+                                {Number(item.total_reciclado_kg).toFixed(1)} kg
                               </div>
-                            ) : (
-                              <span className="font-medium">{item.name}</span>
+                            </div>
+                            {index < 3 && (
+                              <div className="flex items-center">
+                                <span className="text-xl mr-1">{medal.icon}</span>
+                                <Badge className={`${medal.color} text-black`}>{medal.label}</Badge>
+                              </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="font-semibold mr-3">{item.valor} pontos</span>
-                          {medal.type !== "none" && (
-                            <div className="flex items-center">
-                              <span className="text-xl mr-1">{medal.icon}</span>
-                              <Badge className={`${medal.color} text-black`}>{medal.label}</Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">Nenhum dado de ranking disponível</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -387,7 +518,7 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
           <TabsContent value="progresso" className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={progressoData}
+                data={progressData}
                 margin={{
                   top: 5,
                   right: 30,
@@ -401,7 +532,7 @@ export function DashboardCharts({ turma = "todas" }: { turma?: string }) {
                 <Tooltip
                   contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", color: "#333" }}
                   className="dark:bg-[#333] dark:border-[#555] dark:text-white"
-                  formatter={(value) => [`${value} kg`, "Quantidade"]}
+                  formatter={(value) => [`${Number(value).toFixed(1)} kg`, "Quantidade"]}
                 />
                 <Line
                   type="monotone"

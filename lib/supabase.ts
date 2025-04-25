@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js"
 
 // Criando um cliente Supabase para o lado do cliente
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
 // Verificar se as variáveis de ambiente estão definidas
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -15,23 +15,37 @@ if (!supabaseUrl || !supabaseAnonKey) {
 let supabaseInstance: ReturnType<typeof createClient> | null = null
 
 export const getSupabase = () => {
-  if (!supabaseInstance) {
+  if (!supabaseInstance && supabaseUrl && supabaseAnonKey) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: "greensaas-auth-token",
       },
     })
   }
   return supabaseInstance
 }
 
-export const supabase = getSupabase()
+// Exportando o cliente Supabase
+export const supabase = getSupabase() || createClient("", "", { auth: { persistSession: false } })
+
+// Função para verificar se o Supabase está configurado corretamente
+export const isSupabaseConfigured = () => {
+  return !!supabaseUrl && !!supabaseAnonKey
+}
 
 // Função para debug - remover em produção
 export const checkSupabaseConnection = async () => {
   try {
+    if (!isSupabaseConfigured()) {
+      return {
+        data: null,
+        error: new Error("Supabase não está configurado. Verifique as variáveis de ambiente."),
+      }
+    }
+
     const { data, error } = await supabase.auth.getSession()
     console.log("Supabase connection check:", { data, error })
     return { data, error }

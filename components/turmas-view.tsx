@@ -1,37 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-
-// Dados mockados para o ranking por curso
-const rankingPorCurso = {
-  "Ciência da Computação": [
-    { name: "Turma A", valor: 850, posicao: 1, unidade: "Unama Alcindo Cacela" },
-    { name: "Turma B", valor: 650, posicao: 2, unidade: "Unama BR" },
-    { name: "Turma C", valor: 450, posicao: 3, unidade: "Unama Gentil" },
-    { name: "Turma D", valor: 350, posicao: 4, unidade: "Unama Alcindo Cacela" },
-  ],
-  Odontologia: [
-    { name: "Turma A", valor: 780, posicao: 1, unidade: "Unama BR" },
-    { name: "Turma B", valor: 720, posicao: 2, unidade: "Unama Alcindo Cacela" },
-    { name: "Turma C", valor: 520, posicao: 3, unidade: "Unama Gentil" },
-    { name: "Turma D", valor: 320, posicao: 4, unidade: "Unama BR" },
-  ],
-  Direito: [
-    { name: "Turma A", valor: 920, posicao: 1, unidade: "Unama Gentil" },
-    { name: "Turma B", valor: 680, posicao: 2, unidade: "Unama BR" },
-    { name: "Turma C", valor: 580, posicao: 3, unidade: "Unama Alcindo Cacela" },
-    { name: "Turma D", valor: 480, posicao: 4, unidade: "Unama BR" },
-  ],
-  Engenharia: [
-    { name: "Turma A", valor: 800, posicao: 1, unidade: "Unama Alcindo Cacela" },
-    { name: "Turma B", valor: 750, posicao: 2, unidade: "Unama BR" },
-    { name: "Turma C", valor: 600, posicao: 3, unidade: "Unama Gentil" },
-    { name: "Turma D", valor: 400, posicao: 4, unidade: "Unama Alcindo Cacela" },
-  ],
-}
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Leaf, Clock, Trophy } from "lucide-react"
+import { useAppData } from "@/hooks/use-app-data"
 
 // Função para obter medalha com base na posição
 const getMedalByPosition = (position: number) => {
@@ -47,33 +23,57 @@ const getMedalByPosition = (position: number) => {
   }
 }
 
+interface RankingItem {
+  curso: string
+  turma: string
+  unidade: string
+  total_reciclado_kg: number
+  total_pontos: number
+  total_entregas: number
+}
+
 export function TurmasView() {
+  const { cursos, unidades, isLoadingCursos, isLoadingUnidades } = useAppData()
   const [cursoFiltro, setCursoFiltro] = useState<string>("todos")
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>("todas")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [rankingData, setRankingData] = useState<RankingItem[]>([])
 
-  // Obter dados de ranking com base na seleção
-  const getRankingData = () => {
-    let result = []
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-    if (cursoFiltro === "todos") {
-      // Combinar todos os cursos
-      Object.values(rankingPorCurso).forEach((turmas) => {
-        result = [...result, ...turmas]
-      })
-    } else {
-      result = rankingPorCurso[cursoFiltro as keyof typeof rankingPorCurso] || []
+        // Construir parâmetros de consulta
+        const params = new URLSearchParams()
+        if (cursoFiltro !== "todos") {
+          params.append("curso", cursoFiltro)
+        }
+        if (unidadeFiltro !== "todas") {
+          params.append("unidade", unidadeFiltro)
+        }
+
+        // Buscar dados do ranking
+        const response = await fetch(`/api/ranking?${params.toString()}`)
+
+        if (!response.ok) {
+          throw new Error("Falha ao carregar dados do ranking")
+        }
+
+        const result = await response.json()
+        setRankingData(result.data || [])
+      } catch (err) {
+        console.error("Erro ao carregar ranking:", err)
+        setError(err instanceof Error ? err.message : "Erro desconhecido")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    // Filtrar por unidade se necessário
-    if (unidadeFiltro !== "todas") {
-      result = result.filter((item) => item.unidade === unidadeFiltro)
-    }
-
-    // Ordenar por pontuação
-    return result.sort((a, b) => b.valor - a.valor)
-  }
-
-  const rankingData = getRankingData()
+    fetchRanking()
+  }, [cursoFiltro, unidadeFiltro])
 
   return (
     <Card className="border-emerald-500">
@@ -84,42 +84,56 @@ export function TurmasView() {
       <CardContent>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="w-full md:w-1/2">
-            <Select value={cursoFiltro} onValueChange={setCursoFiltro}>
+            <Select value={cursoFiltro} onValueChange={setCursoFiltro} disabled={isLoadingCursos}>
               <SelectTrigger>
-                <SelectValue placeholder="Filtrar por curso" />
+                <SelectValue placeholder={isLoadingCursos ? "Carregando..." : "Filtrar por curso"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os cursos</SelectItem>
-                <SelectItem value="Ciência da Computação">Ciência da Computação</SelectItem>
-                <SelectItem value="Odontologia">Odontologia</SelectItem>
-                <SelectItem value="Direito">Direito</SelectItem>
-                <SelectItem value="Engenharia">Engenharia</SelectItem>
+                {cursos.map((curso) => (
+                  <SelectItem key={curso.id} value={curso.nome}>
+                    {curso.nome}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="w-full md:w-1/2">
-            <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro}>
+            <Select value={unidadeFiltro} onValueChange={setUnidadeFiltro} disabled={isLoadingUnidades}>
               <SelectTrigger>
-                <SelectValue placeholder="Filtrar por unidade" />
+                <SelectValue placeholder={isLoadingUnidades ? "Carregando..." : "Filtrar por unidade"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas as unidades</SelectItem>
-                <SelectItem value="Unama Alcindo Cacela">Unama Alcindo Cacela</SelectItem>
-                <SelectItem value="Unama BR">Unama BR</SelectItem>
-                <SelectItem value="Unama Gentil">Unama Gentil</SelectItem>
+                {unidades.map((unidade) => (
+                  <SelectItem key={unidade.id} value={unidade.nome}>
+                    {unidade.nome}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {rankingData.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : rankingData.length > 0 ? (
           <div className="space-y-3">
             {rankingData.map((item, index) => {
               const medal = getMedalByPosition(index < 3 ? index + 1 : 4)
               return (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
+                  className={`flex flex-col md:flex-row items-center justify-between p-4 rounded-lg border ${
                     index === 0
                       ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
                       : index === 1
@@ -129,7 +143,7 @@ export function TurmasView() {
                           : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                   }`}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center w-full md:w-auto mb-3 md:mb-0">
                     <div
                       className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 font-bold ${
                         index === 0
@@ -146,20 +160,36 @@ export function TurmasView() {
                     <div>
                       <div className="flex flex-col">
                         <span className="font-medium">
-                          {cursoFiltro === "todos"
-                            ? `${item.name} (${cursoFiltro === "todos" ? item.unidade.replace("Unama ", "") : ""})`
-                            : item.name}
+                          {cursoFiltro === "todos" ? `${item.turma} (${item.curso})` : item.turma}
                         </span>
-                        {cursoFiltro !== "todos" && (
-                          <span className="text-sm text-gray-500 dark:text-gray-400">{item.unidade}</span>
-                        )}
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{item.unidade}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="font-semibold mr-3">{item.valor} pontos</span>
+                  <div className="flex flex-wrap justify-end gap-4 w-full md:w-auto">
+                    <div className="flex items-center">
+                      <Leaf className="h-4 w-4 mr-1 text-emerald-500" />
+                      <div className="text-right">
+                        <div className="font-semibold">{Number(item.total_reciclado_kg).toFixed(1)} kg</div>
+                        <div className="text-xs text-gray-500">Total reciclado</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1 text-blue-500" />
+                      <div className="text-right">
+                        <div className="font-semibold">{item.total_entregas}</div>
+                        <div className="text-xs text-gray-500">Entregas totais</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 mr-1 text-amber-500" />
+                      <div className="text-right">
+                        <div className="font-semibold">{item.total_pontos}</div>
+                        <div className="text-xs text-gray-500">Pontos</div>
+                      </div>
+                    </div>
                     {index < 3 && (
-                      <div className="flex items-center">
+                      <div className="flex items-center ml-2">
                         <span className="text-xl mr-1">{medal.icon}</span>
                         <Badge className={`${medal.color} text-black`}>{medal.label}</Badge>
                       </div>
