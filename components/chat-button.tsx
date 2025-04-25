@@ -8,6 +8,16 @@ export function ChatButton() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
+  const [shouldRender, setShouldRender] = useState(true)
+
+  useEffect(() => {
+    // Verificar se o chatbot do Dify já existe
+    const difyChatbot = document.getElementById("dify-chatbot-bubble-button")
+    if (difyChatbot) {
+      // Se o chatbot do Dify já existe, não renderizar este componente
+      setShouldRender(false)
+    }
+  }, [])
 
   // Handle clicks outside the chat window to close it
   useEffect(() => {
@@ -39,6 +49,11 @@ export function ChatButton() {
 
   const closeChat = () => {
     setIsOpen(false)
+  }
+
+  // Se não devemos renderizar, retornar null
+  if (!shouldRender) {
+    return null
   }
 
   return (

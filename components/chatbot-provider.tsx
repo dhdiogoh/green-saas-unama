@@ -6,8 +6,8 @@ import { useEffect } from "react"
 
 export function ChatbotProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Add chatbot script only once at the root level
-    if (!document.getElementById("dify-config-script")) {
+    // Verificar se o script já existe para evitar duplicação
+    if (!document.getElementById("dify-config-script") && !document.getElementById("Z7BwZVugq2j9YgNp")) {
       // Create script for config
       const configScript = document.createElement("script")
       configScript.id = "dify-config-script"
