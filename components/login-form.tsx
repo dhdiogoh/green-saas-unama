@@ -4,12 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { Leaf, Recycle, AlertCircle, School, Building2, MapPin, Info, Loader2 } from "lucide-react"
+import { Leaf, Recycle, AlertCircle, School, Building2, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function LoginForm() {
@@ -106,21 +106,6 @@ export function LoginForm() {
         <CardDescription className="text-green-100 text-center">Transformando resíduos em recursos</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-6">
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
-          <Info className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Modo de demonstração</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            Use as seguintes credenciais para acessar o sistema:
-            <br />
-            <strong>Credenciais de acesso:</strong>
-            <ul className="mt-1 list-disc list-inside">
-              <li>Email: cienciaalcindob@gmail.com | Senha: 12345678 (Aluno)</li>
-              <li>Email: adminalcindo@gmail.com | Senha: 12345678 (Instituição)</li>
-            </ul>
-            <strong>Importante:</strong> Selecione "Unama Alcindo Cacela" como instituição.
-          </AlertDescription>
-        </Alert>
-
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
