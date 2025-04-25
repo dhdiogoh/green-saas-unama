@@ -11,10 +11,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-// Criando um singleton para evitar múltiplas instâncias
+// Singleton para o cliente Supabase
 let supabaseInstance: ReturnType<typeof createClient> | null = null
 
 export const getSupabase = () => {
+  if (typeof window === "undefined") {
+    // Servidor: criar uma nova instância cada vez
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+      },
+    })
+  }
+
+  // Cliente: usar singleton
   if (!supabaseInstance && supabaseUrl && supabaseAnonKey) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

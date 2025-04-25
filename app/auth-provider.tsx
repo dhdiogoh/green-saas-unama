@@ -34,53 +34,89 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Se o Supabase não estiver configurado, não tente autenticar
     if (!isConfigured) {
+      console.log("Supabase não está configurado, usando modo de demonstração")
       setIsLoading(false)
       setError(new Error("Supabase não está configurado. Verifique as variáveis de ambiente."))
+
+      // Verificar se há um usuário demo no localStorage
+      try {
+        const demoUserStr = localStorage.getItem("demo-user")
+        if (demoUserStr) {
+          const demoUser = JSON.parse(demoUserStr)
+          console.log("Usuário demo encontrado:", demoUser)
+        }
+      } catch (err) {
+        console.error("Erro ao verificar usuário demo:", err)
+      }
+
       return
     }
 
-    // Verificar a sessão atual
-    const getSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession()
+    console.log("AuthProvider: Inicializando...")
+    setIsLoading(true)
 
-        if (error) {
-          console.error("Erro ao obter sessão:", error)
-          setError(error)
-        } else {
+    // Função para obter a sessão atual
+    const getCurrentSession = async () => {
+      try {
+        // Usar try-catch para cada operação do Supabase
+        try {
+          const { data, error } = await supabase.auth.getSession()
+
+          if (error) {
+            console.error("Erro ao obter sessão:", error)
+            setError(error)
+            setIsLoading(false)
+            return
+          }
+
+          console.log("Sessão obtida:", data)
           setSession(data.session)
           setUser(data.session?.user || null)
+        } catch (sessionError) {
+          console.error("Exceção ao obter sessão:", sessionError)
+          setError(sessionError instanceof Error ? sessionError : new Error(String(sessionError)))
         }
-      } catch (err) {
-        console.error("Erro ao obter sessão:", err)
-        setError(err instanceof Error ? err : new Error(String(err)))
       } finally {
         setIsLoading(false)
       }
     }
 
-    getSession()
+    // Obter a sessão inicial
+    getCurrentSession()
 
-    // Configurar listener para mudanças de autenticação
+    // Configurar o listener de autenticação
     let authListener: { subscription: { unsubscribe: () => void } } | null = null
 
     try {
       const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
-        console.log("Auth state changed:", event)
-        setSession(newSession)
-        setUser(newSession?.user || null)
+        console.log("Evento de autenticação:", event)
+
+        if (event === "SIGNED_OUT") {
+          setUser(null)
+          setSession(null)
+        } else if (newSession) {
+          setUser(newSession.user)
+          setSession(newSession)
+        }
+
         setIsLoading(false)
       })
+
       authListener = data
-    } catch (err) {
-      console.error("Erro ao configurar listener de autenticação:", err)
-      setError(err instanceof Error ? err : new Error(String(err)))
+    } catch (listenerError) {
+      console.error("Erro ao configurar listener de autenticação:", listenerError)
+      setError(listenerError instanceof Error ? listenerError : new Error(String(listenerError)))
       setIsLoading(false)
     }
 
+    // Limpar o listener quando o componente for desmontado
     return () => {
       if (authListener) {
-        authListener.subscription.unsubscribe()
+        try {
+          authListener.subscription.unsubscribe()
+        } catch (unsubError) {
+          console.error("Erro ao cancelar inscrição do listener:", unsubError)
+        }
       }
     }
   }, [isConfigured])
