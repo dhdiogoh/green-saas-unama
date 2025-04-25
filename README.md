@@ -29,43 +29,6 @@ Alternativamente, você pode clonar este repositório e executá-lo localmente s
 - **Curso**: Ciência da Computação
 - **Turma**: Turma B
 
-## Informações de Conexão com o Banco de Dados
-
-⚠️ **AVISO DE SEGURANÇA**: As informações abaixo contêm credenciais sensíveis. Não compartilhe este README publicamente e considere mover estas informações para variáveis de ambiente em produção.
-
-### Detalhes de Conexão PostgreSQL/Supabase
-
-**String de conexão completa:**
-\`\`\`
-postgresql://postgres:Greensaas2025!@db.wxmhornyflaqhzaqulml.supabase.co:5432/postgres
-\`\`\`
-
-**Detalhes individuais:**
-- **Host:** db.wxmhornyflaqhzaqulml.supabase.co
-- **Porta:** 5432
-- **Banco de dados:** postgres
-- **Usuário:** postgres
-- **Senha:** Greensaas2025!
-
-### Como usar estas informações
-
-Para conectar ao banco de dados em desenvolvimento local, você pode usar estas credenciais nas suas variáveis de ambiente:
-
-\`\`\`env
-POSTGRES_URL=postgresql://postgres:Greensaas2025!@db.wxmhornyflaqhzaqulml.supabase.co:5432/postgres
-POSTGRES_HOST=db.wxmhornyflaqhzaqulml.supabase.co
-POSTGRES_PORT=5432
-POSTGRES_DATABASE=postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=Greensaas2025!
-
-# Supabase
-SUPABASE_URL=https://wxmhornyflaqhzaqulml.supabase.co
-NEXT_PUBLIC_SUPABASE_URL=https://wxmhornyflaqhzaqulml.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-\`\`\`
-
 ## Funcionalidades
 
 O Green SaaS oferece diferentes funcionalidades dependendo do tipo de usuário:
@@ -96,6 +59,25 @@ Cada tipo de material reciclável tem uma pontuação específica:
 | Vidro    | 30 pontos    | Redução de 0.3 kg de CO₂ |
 | Papel    | 20 pontos    | Preservação de 1 árvore a cada 50kg |
 
+## 🌿 Sobre o Assistente Virtual do Green SaaS
+
+O **assistente virtual do Green SaaS**, chamado **Theo**, foi criado para facilitar o acesso às informações da plataforma de reciclagem universitária da **Unama**. Ele atua como um guia interativo, fornecendo respostas claras, objetivas e atualizadas sobre o funcionamento do programa.
+
+### ✅ O que o assistente responde:
+
+- Pontos de coleta e horários de funcionamento em cada unidade participante  
+- Tipos de materiais aceitos para reciclagem e dicas de preparo  
+- Sistema de pontuação por material e como maximizar os pontos  
+- Localização dos pontos de coleta dentro do campus  
+- Ranking das turmas e funcionamento do dashboard  
+- Processo completo de entrega dos recicláveis  
+- Contatos dos responsáveis por unidade  
+
+### 💬 Como ele se comunica:
+
+O assistente incentiva práticas sustentáveis e promove o engajamento dos alunos com **emojis temáticos** (♻️ 🌱 🌎) e mensagens motivadoras, reforçando a importância da reciclagem e da competição saudável entre turmas.
+
+
 ## Tecnologias Utilizadas
 
 - **Frontend**: 
@@ -119,6 +101,9 @@ Cada tipo de material reciclável tem uma pontuação específica:
 
 - **Implantação**:
   - Vercel
+
+- **ChatBot Ai**
+  - ChatGPT 4o-mini API
 
 ## Instalação e Configuração
 
