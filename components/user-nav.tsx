@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 
 export function UserNav() {
   const router = useRouter()
@@ -23,108 +22,46 @@ export function UserNav() {
   const [instituicao, setInstituicao] = useState<string | null>(null)
   const [turma, setTurma] = useState<string | null>(null)
   const [curso, setCurso] = useState<string | null>(null)
-  const [isDemoMode, setIsDemoMode] = useState(false)
 
   useEffect(() => {
-    // Verificar se estamos em modo de demonstração
-    const checkDemoMode = () => {
-      if (!isSupabaseConfigured()) {
-        setIsDemoMode(true)
-        // Tentar obter dados do usuário demo do localStorage
-        try {
-          const demoUserStr = localStorage.getItem("demo-user")
-          if (demoUserStr) {
-            const demoUser = JSON.parse(demoUserStr)
-            setUserEmail(demoUser.email || "")
-            const metadata = demoUser.user_metadata || {}
-            setUserType(metadata.tipo_usuario || metadata.user_type || "instituicao")
-            setInstituicao(metadata.instituicao || null)
-            setTurma(metadata.turma || null)
-            setCurso(metadata.curso || null)
+    // Tentar obter dados do usuário demo do localStorage
+    try {
+      const demoUserStr = localStorage.getItem("demo-user")
+      if (demoUserStr) {
+        const demoUser = JSON.parse(demoUserStr)
+        setUserEmail(demoUser.email || "")
+        const metadata = demoUser.user_metadata || {}
+        setUserType(metadata.tipo_usuario || metadata.user_type || "instituicao")
+        setInstituicao(metadata.instituicao || null)
+        setTurma(metadata.turma || null)
+        setCurso(metadata.curso || null)
 
-            // Definir nome do usuário com base no email
-            if (demoUser.email) {
-              const emailParts = demoUser.email.split("@")
-              if (emailParts.length > 0) {
-                const namePart = emailParts[0]
-                // Capitalizar primeira letra de cada palavra
-                const formattedName = namePart
-                  .split(/[._-]/)
-                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                  .join(" ")
-                setUserName(formattedName)
-              }
-            }
+        // Definir nome do usuário com base no email
+        if (demoUser.email) {
+          const emailParts = demoUser.email.split("@")
+          if (emailParts.length > 0) {
+            const namePart = emailParts[0]
+            // Capitalizar primeira letra de cada palavra
+            const formattedName = namePart
+              .split(/[._-]/)
+              .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+              .join(" ")
+            setUserName(formattedName)
           }
-        } catch (err) {
-          console.error("Erro ao obter usuário demo:", err)
         }
-        return true
       }
-      return false
+    } catch (err) {
+      console.error("Erro ao obter usuário demo:", err)
     }
-
-    // Se não estamos em modo de demonstração, buscar informações do usuário atual
-    const getUserInfo = async () => {
-      if (checkDemoMode()) return
-
-      try {
-        const { data, error } = await supabase.auth.getUser()
-
-        if (error) {
-          console.error("Erro ao obter usuário:", error)
-          return
-        }
-
-        if (data.user) {
-          // Obter o nome do usuário dos metadados
-          const metadata = data.user.user_metadata || {}
-          const fullName = metadata.full_name
-          if (fullName) {
-            setUserName(fullName)
-          } else if (data.user.email) {
-            // Se não tiver nome completo, usar parte do email
-            const emailParts = data.user.email.split("@")
-            if (emailParts.length > 0) {
-              const namePart = emailParts[0]
-              // Capitalizar primeira letra de cada palavra
-              const formattedName = namePart
-                .split(/[._-]/)
-                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                .join(" ")
-              setUserName(formattedName)
-            }
-          }
-
-          // Definir o email
-          if (data.user.email) {
-            setUserEmail(data.user.email)
-          }
-
-          // Definir o tipo de usuário e outras informações
-          setUserType(metadata.tipo_usuario || metadata.user_type || "instituicao")
-          setInstituicao(metadata.instituicao || null)
-          setTurma(metadata.turma || null)
-          setCurso(metadata.curso || null)
-        }
-      } catch (err) {
-        console.error("Erro ao carregar informações do usuário:", err)
-      }
-    }
-
-    getUserInfo()
   }, [])
 
   const handleLogout = async () => {
     try {
-      if (isDemoMode) {
-        // Em modo de demonstração, apenas limpar o localStorage
-        localStorage.removeItem("demo-user")
-      } else {
-        // Logout normal do Supabase
-        await supabase.auth.signOut()
-      }
-      router.push("/")
+      // Limpar o localStorage
+      localStorage.removeItem("demo-user")
+
+      // Redirecionar para a página inicial
+      window.location.href = "/"
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
     }
@@ -158,7 +95,7 @@ export function UserNav() {
             <p className="text-xs font-medium text-emerald-600 mt-1">
               {userType === "aluno" ? "Aluno" : "Instituição"}
             </p>
-            {isDemoMode && <p className="text-xs font-medium text-amber-600 mt-1">Modo de Demonstração</p>}
+            <p className="text-xs font-medium text-amber-600 mt-1">Modo de Demonstração</p>
             {userType === "aluno" && instituicao && (
               <div className="mt-1 text-xs text-gray-500">
                 <p>{instituicao}</p>

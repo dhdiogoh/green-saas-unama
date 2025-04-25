@@ -1,4 +1,3 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -7,53 +6,25 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
   try {
-    // Verificar se estamos em modo de demonstração
+    // Verificar se há um usuário demo no localStorage
+    // Isso é feito verificando um cookie específico que seria definido no login
     const hasDemoUser = req.cookies.has("demo-user") || req.headers.get("x-demo-mode") === "true"
 
-    if (hasDemoUser) {
-      console.log("Middleware: Modo de demonstração detectado")
-      // Em modo de demonstração, permitir acesso a todas as rotas
-      return res
-    }
-
-    // Tentar criar cliente Supabase com tratamento de erro
-    let supabase
-    try {
-      supabase = createMiddlewareClient({ req, res })
-    } catch (supabaseError) {
-      console.error("Erro ao criar cliente Supabase no middleware:", supabaseError)
-      // Se não conseguir criar o cliente, permitir acesso (fallback)
-      return res
-    }
-
-    // Verificar sessão com tratamento de erro
-    let session = null
-    try {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error("Erro ao obter sessão no middleware:", error)
-      } else {
-        session = data.session
-      }
-    } catch (sessionError) {
-      console.error("Exceção ao obter sessão no middleware:", sessionError)
-      // Se houver erro ao obter sessão, permitir acesso (fallback)
-      return res
-    }
-
-    // Rotas protegidas que requerem autenticação
+    // Verificar se estamos em uma rota protegida
     const protectedRoutes = ["/dashboard"]
     const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
-    // Se for uma rota protegida e o usuário não estiver autenticado, redirecionar para login
-    if (isProtectedRoute && !session) {
-      console.log("Middleware: Usuário não autenticado tentando acessar rota protegida")
-      const redirectUrl = new URL("/", req.url)
-      return NextResponse.redirect(redirectUrl)
-    }
+    // Se for uma rota protegida e não houver usuário demo, redirecionar para login
+    if (isProtectedRoute && !hasDemoUser) {
+      // Verificar se há um usuário demo no localStorage via cookie
+      const demoUserCookie = req.cookies.get("demo-user")
 
-    // Adicionar cookie para debug
-    res.cookies.set("middleware-executed", "true")
+      if (!demoUserCookie) {
+        console.log("Middleware: Usuário não autenticado tentando acessar rota protegida")
+        const redirectUrl = new URL("/", req.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
 
     return res
   } catch (error) {
